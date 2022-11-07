@@ -11,3 +11,17 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 - [ ] Cleanup
 - [ ] GUI?
 
+## Installation
+- git clone this repo
+- Linux/Mac
+    - `$ python -m venv venv`
+    - `$ source ./venv/bin/activate` 
+    - `(venv) $ pip install -r requirements.txt`
+- Windows
+    - `PS> python.exe -m venv venv`
+    - `PS> .\venv\Scripts\Activate.ps1`
+        > If you get an execution policy warning, open PowerShell as an administrator and run `Set-ExecutionPolicy RemoteSigned`
+    - `(venv) PS> pip install -r requirements.txt`
+
+## Usage
+- `$ python spotify-shuffle.py`
