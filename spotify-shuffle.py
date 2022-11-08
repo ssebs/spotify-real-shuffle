@@ -72,6 +72,17 @@ def callback():
     header = {"Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"}
     playlists = get_playlists(header)
+    playlist_ids = []
+    for pl in playlists['items']:
+        playlist_ids.append(pl['id'])
+    print(playlist_ids)
+    tracks = get_playlist_tracks(playlist_ids[1], header)
+    print("tracks")
+    print(tracks)
+    # for pid in playlist_ids:
+    #     tracks = get_playlist_tracks(pid, header)
+    #     print("tracks")
+    #     print(tracks)
     return f"<html><body><a href='/'>home</a><pre>{json.dumps(playlists, indent=2)}</pre></body></html>"
 
 
@@ -80,7 +91,13 @@ def get_playlists(header: dict):
         print("vars not set")
         return False
     r = requests.get(api_base_uri+"/me/playlists", headers=header)
-    print(r.json())
+    return r.json()
+
+def get_playlist_tracks(playlist_id: str, header: dict):
+    if header is None:
+        print("vars not set")
+        return False
+    r = requests.get(api_base_uri+"/playlists/"+playlist_id+"/tracks", headers=header)
     return r.json()
 
 
