@@ -22,6 +22,14 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
     - `PS> .\venv\Scripts\Activate.ps1`
         > If you get an execution policy warning, open PowerShell as an administrator and run `Set-ExecutionPolicy RemoteSigned`
     - `(venv) PS> pip install -r requirements.txt`
-
+- Create a `secrets.json` file with your spotify dev api
+    - Should look like this:
+    - ```json
+        {
+            "client_id": "<somehashvalue>",
+            "client_secret": "<somehashvalue>"
+        }
+      ```
+- 
 ## Usage
-- `$ python spotify-shuffle.py`
+<!-- - `$ python spotify-shuffle.py` -->
