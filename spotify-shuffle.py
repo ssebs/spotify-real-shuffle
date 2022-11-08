@@ -3,6 +3,7 @@ from flask import Flask, request, redirect
 
 import json
 import requests
+import base64
 
 # VARS
 scopes = [
@@ -11,6 +12,8 @@ scopes = [
     "playlist-modify-private", 
     "playlist-modify-public"
 ]
+auth_uri = "https://accounts.spotify.com/authorize"
+token_uri = "https://accounts.spotify.com/api/token"
 
 # Load secrets
 secrets = {}
@@ -38,7 +41,6 @@ print(f"cid: {secrets['client_id']}, cs: {secrets['client_secret']}")
 @app.route('/login/')
 def login():
     print("Logging in...")
-    auth_uri = "https://accounts.spotify.com/authorize"
     r = requests.get(auth_uri, params={
         "response_type": "code",
         "client_id": secrets['client_id'],
@@ -51,9 +53,25 @@ def login():
 def callback():
     if "error" in request.args:
         return request.args["error"]
-    
-    code = request.args['code']
-    return code
 
+    code = request.args['code']
+    secret = secrets['client_id'] + ":" + secrets["client_secret"]
+    auth_encoded = base64.b64encode(secret.encode(("ascii"))).decode("ascii")
+    # Get access token
+    r = requests.post(token_uri, data={
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": "http://localhost:8080/callback"
+    }, headers={
+        "Authorization": f"Basic {str(auth_encoded)}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    })
+    print(r.url)
+    print(auth_encoded)
+    return r.json()
+
+
+
+# Main func
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
