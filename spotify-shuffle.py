@@ -4,6 +4,7 @@ from flask import Flask, request, redirect
 import json
 import requests
 import base64
+import random
 
 # VARS
 scopes = [
@@ -68,22 +69,40 @@ def callback():
         print("Failed to login")
         return "Failed to login"
     print("Logged in!")
+
     access_token = r.json()["access_token"]
     header = {"Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"}
+
     playlists = get_playlists(header)
+    test_playlist = None
+
     playlist_ids = []
     for pl in playlists['items']:
-        playlist_ids.append(pl['id'])
-    print(playlist_ids)
-    tracks = get_playlist_tracks(playlist_ids[1], header)
-    print("tracks")
-    print(tracks)
-    # for pid in playlist_ids:
-    #     tracks = get_playlist_tracks(pid, header)
-    #     print("tracks")
-    #     print(tracks)
-    return f"<html><body><a href='/'>home</a><pre>{json.dumps(playlists, indent=2)}</pre></body></html>"
+        if pl["name"] == "Test Playlist":
+            test_playlist = pl
+            playlist_ids.append(pl["id"])
+    # print(pl)
+    
+    tracks = get_playlist_tracks(playlist_ids[0], header)
+    track_uris = []
+    track_uris_str = []
+    for track in tracks['items']:
+        track_uris.append(track["track"]["uri"])
+        track_uris_str.append(f'{track["track"]["uri"]} - {track["track"]["name"]}')
+    
+    # Re-order
+    idx_list = list(range(len(track_uris)))
+    random.shuffle(idx_list)
+    shuffled = [track_uris[i] for i in idx_list]
+    print(shuffled)
+    obj = {
+        "shuffled": shuffled,
+        "original": track_uris
+    }
+
+
+    return f"<html><body><a href='/'>home</a><pre>{json.dumps(obj, indent=2)}</pre></body></html>"
 
 
 def get_playlists(header: dict):
