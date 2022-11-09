@@ -4,9 +4,9 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 
 ## Goals
 - [x] Connect to API and read playlist info
-- [ ] Re-arrange some songs
-- [ ] Shuffle a playlist and save it
-- [ ] Support Pagination
+- [X] Re-arrange some songs
+- [X] Shuffle a playlist and save it
+- [ ] Support Pagination (max 100 by default)
 - [ ] User can easily run this
 - [ ] User can select which playlists to shuffle
 - [ ] Cleanup

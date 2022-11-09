@@ -100,9 +100,12 @@ def callback():
         "shuffled": shuffled,
         "original": track_uris
     }
+    # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
+    resp = update_playlist_items(",".join(shuffled), playlist_ids[0], header)
+    # if "error" in resp:
+    #     # 
 
-
-    return f"<html><body><a href='/'>home</a><pre>{json.dumps(obj, indent=2)}</pre></body></html>"
+    return f"<html><body><a href='/'>home</a><pre>{json.dumps(resp, indent=2)}</pre></body></html>"
 
 
 def get_playlists(header: dict):
@@ -117,6 +120,15 @@ def get_playlist_tracks(playlist_id: str, header: dict):
         print("vars not set")
         return False
     r = requests.get(api_base_uri+"/playlists/"+playlist_id+"/tracks", headers=header)
+    return r.json()
+
+def update_playlist_items(uris: str, playlist_id: str, header: dict):
+    if header is None:
+        print("vars not set")
+        return False
+    r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
+        "uris": uris,
+    }, headers=header)
     return r.json()
 
 
