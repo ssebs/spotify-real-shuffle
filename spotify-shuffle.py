@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from flask import Flask, request, redirect, session
 
+import traceback
 import json
 import requests
 import base64
@@ -80,41 +81,6 @@ def callback():
     session["header"] = header
     update_playlists_rt()
 
-    # # Get current user's playlists
-    # playlists = get_playlists(header)
-    # test_playlist = None
-
-    # # playlist_ids = []
-    # for pl in playlists['items']:
-    #     if pl["name"] == "Test Playlist":
-    #         test_playlist = pl
-    #         # playlist_ids.append(pl["id"])
-    # # print(pl)
-
-    # # Get tracks from a playlist
-    # tracks = get_playlist_tracks(test_playlist["id"], test_playlist["tracks"]["total"], header)
-    # track_uris = []
-    # # track_uris_str = []
-    # for track in tracks['items']:
-    #     track_uris.append(track["track"]["uri"])
-    #     # track_uris_str.append(f'{track["track"]["uri"]} - {track["track"]["name"]}')
-
-    # # Re-order
-    # idx_list = list(range(len(track_uris)))
-    # random.shuffle(idx_list)
-    # shuffled = [track_uris[i] for i in idx_list]
-    # # print(shuffled)
-    # obj = {
-    #     "shuffled": shuffled,
-    #     "original": track_uris
-    # }
-
-    # Update playlist
-    # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-    # resp = update_playlist_items(",".join(shuffled), test_playlist["id"], header)
-    # if "error" in resp:
-    #     #
-
     return redirect('/update')
     # return f"<html><body><a href='/'>home</a><pre>{json.dumps(tracks, indent=2)}</pre></body></html>"
 
@@ -127,18 +93,50 @@ def update_playlists_rt():
     except Exception:
         return redirect("/")
     playlists = get_playlists(header)
+    with open("playlists.json", "w") as f:
+        f.write(json.dumps(playlists, indent=2))
     test_playlist = None
 
     # playlist_ids = []
-    for pl in playlists['items']:
+    uris_to_update = [
+        "spotify:playlist:7lS8RnhxDyUGdola0ZGQJS", # Test Playlist
+        "spotify:playlist:4WzLv9T6sZ0CvwNdknqH88" # Sassy Pop
+    ]
+    for pl in playlists:
         if pl["name"] == "Test Playlist":
             test_playlist = pl
             # playlist_ids.append(pl["id"])
     # print(pl)
+    try:
+        # Get tracks from a playlist
+        tracks = get_playlist_tracks(test_playlist["id"], test_playlist["tracks"]["total"], header)
 
-    # Get tracks from a playlist
-    tracks = get_playlist_tracks(test_playlist["id"], test_playlist["tracks"]["total"], header)
-    return f"<html><body><a href='/'>End to End</a> <a href='/update'>Update</a><pre>tracks:{json.dumps(tracks, indent=2)}</pre></body></html>"
+        track_uris = []
+        track_uris_str = []
+        for track in tracks:
+            # track_uris_str.append(track)
+            track_uris.append(track["track"]["uri"])
+            track_uris_str.append(f'{track["track"]["uri"]} - {track["track"]["name"]}')
+
+        # Re-order
+        idx_list = list(range(len(track_uris)))
+        random.shuffle(idx_list)
+        shuffled = [track_uris[i] for i in idx_list]
+        shuffled_str = [track_uris_str[i] for i in idx_list]
+        # print(shuffled)
+        obj = {
+            "original": track_uris_str,
+            "shuffled": shuffled_str
+        }
+
+        # Update playlist
+        # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
+        resp = update_playlist_items(",".join(shuffled), test_playlist["id"], header)
+        if "snapshot_id" in resp:
+            return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><h2>Shuffled!</h2><pre>{json.dumps(obj, indent=2)}</pre></body></html>"
+        return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><pre>{json.dumps(obj, indent=2)}</pre></body></html>"
+    except Exception as e:
+        return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><br/>500 Error: <pre>{traceback.format_exc()}</pre></body></html>"
 
 
 def get_playlists(header: dict):
@@ -146,7 +144,7 @@ def get_playlists(header: dict):
         print("vars not set")
         return False
     r = requests.get(api_base_uri+"/me/playlists", headers=header)
-    return r.json()
+    return r.json()["items"]
 
 
 def get_playlist_tracks(playlist_id: str, tracks_total: int, header: dict):
@@ -156,15 +154,23 @@ def get_playlist_tracks(playlist_id: str, tracks_total: int, header: dict):
     # print(f"tracks total: {tracks_total}")
     tracks = []
     count = 0
-    limit = 2
+    limit = 20
 
-    for track_num in range((math.floor(tracks_total / limit)) + 1):
+    bad_var_name = tracks_total
+    if tracks_total > limit:
+        bad_var_name = (math.floor(tracks_total / limit)) + 1
+
+    for track_num in range(bad_var_name):
         offset = limit * count
         fields = "&fields=href,items(track(name,id,uri))"
         query_params = f"?limit={limit}&offset={offset}{fields}"
         url = api_base_uri + "/playlists/" + playlist_id + "/tracks" + query_params
         r = requests.get(url, headers=header)
-        tracks.append(r.json())
+        # tracks.append(r.json())
+        # print(r.json())
+        tracks.extend(
+            r.json()["items"]
+        )
         count += 1
     return tracks
 
