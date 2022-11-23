@@ -224,6 +224,7 @@ def update_playlist_items(uris: str, playlist_id: str, header: dict):
         # See https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
         # TODO: Stop replaceing and instead re-order. 
         # TODO: Support more than 100 items
+        # Maybe shuffle first 100, then loop?
         r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
             "uris": uris,
         }, headers=header)
