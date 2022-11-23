@@ -57,6 +57,7 @@ def home_rt():
 
 @app.route('/login/')
 def login_rt():
+    # Handle login pt 1 (will move on to /callback/)
     print("Logging in...")
     r = requests.get(auth_uri, params={
         "response_type": "code",
@@ -69,6 +70,7 @@ def login_rt():
 
 @app.route("/callback/")
 def callback_rt():
+    # Handle login pt 2
     if "error" in request.args:
         return request.args["error"]
 
@@ -96,17 +98,17 @@ def callback_rt():
     return redirect("/")
 
 
-@app.route("/update", methods=["POST"])
-def update_playlists_rt():
+@app.route("/update/", methods=["POST"])
+def update_rt():
     try:
-        print(request.form)
+        # print(request.form)
         playlist_ids = []
         for pid in request.form.values():
             playlist_ids.append(pid)
         # playlist_ids should be a comma separated list
         # e.g. 7lS8RnhxDyUGdola0ZGQJS,4WzLv9T6sZ0CvwNdknqH88
         playlist_ids = ",".join(playlist_ids)
-        print(playlist_ids)
+        # print(playlist_ids)
     except Exception:
         return render_template('error.html', error=traceback.format_exc())
     
@@ -121,12 +123,6 @@ def update_playlists_rt():
     with open('playlists.json', 'r') as f:
         playlists = json.loads(f.read())
 
-    # print("playlists")
-    # print(playlists)
-    # playlists_to_update = {
-        # "7lS8RnhxDyUGdola0ZGQJS": {},  # Test Playlist
-        # "4WzLv9T6sZ0CvwNdknqH88": {}  # Sassy Pop
-    # }
     playlists_to_update = {}
     for pid in playlist_ids.split(","):
         playlists_to_update[pid] = {}
@@ -137,13 +133,12 @@ def update_playlists_rt():
             if _id == pl["id"]:
                 playlists_to_update[_id] = pl
     # print(playlists_to_update)
-    # return "<pre>"+json.dumps(playlists_to_update, indent=2)+"</pre>"
+    # return render_template('error.html', error=json.dumps(playlists_to_update, indent=2))
 
     ui_obj = {}
     for _playlist in playlists_to_update.values():
         try:
             # Get tracks from a playlist
-            print(_playlist)
             tracks = get_playlist_tracks(
                 _playlist["id"], _playlist["tracks"]["total"], header)
             # return render_template('error.html', error=json.dumps(_playlist, indent=2))
@@ -153,7 +148,7 @@ def update_playlists_rt():
             for track in tracks:
                 track_uris.append(track["track"]["uri"])
                 track_uris_str.append(
-                    f'{track["track"]["name"]} - {track["track"]["uri"]}')
+                    f'{track["track"]["name"]}')
 
             # Re-order
             idx_list = list(range(len(track_uris)))
@@ -171,11 +166,17 @@ def update_playlists_rt():
             resp = update_playlist_items(
                 ",".join(shuffled), _playlist["id"], header)
             if "snapshot_id" in resp:
+                # Successful update, keep looping
                 ui_obj[_playlist["name"]] = obj
                 continue
-            return render_template('error.html', error=json.dumps(resp, indent=2))
+            else:
+                # Not sure what the error may be
+                # return render_template('error.html', error=json.dumps(resp, indent=2))
+                return render_template('error.html', error=resp)
         except Exception:
+            # 500 server error
             return render_template('error.html', error=traceback.format_exc())
+    # All updates complete
     return render_template('updated.html', updates=ui_obj)
 
 
@@ -219,10 +220,14 @@ def update_playlist_items(uris: str, playlist_id: str, header: dict):
     if header is None:
         print("vars not set")
         return False
-    r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
-        "uris": uris,
-    }, headers=header)
-    return r.json()
+    try:
+        r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
+            "uris": uris,
+        }, headers=header)
+        return r.json()
+    except Exception as e:
+        print(e)
+        return {"Error": e, "Request": r.text}
 
 
 # Main func

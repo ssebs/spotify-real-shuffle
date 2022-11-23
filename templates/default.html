@@ -11,8 +11,8 @@
 <body>
     <h1>Spotify Real Shuffle</h1>
     <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/login">Login</a></li>
+        <li><a href="{{ url_for('home_rt') }}">Home</a></li>
+        <li><a href="{{ url_for('login_rt') }}">Login</a></li>
     </ul>
     <br>
     {% block body %}

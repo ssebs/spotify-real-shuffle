@@ -7,8 +7,9 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 - [X] Re-arrange some songs
 - [X] Shuffle a playlist and save it
 - [x] Support Pagination (max 100 by default)
+- [x] User can select which playlists to shuffle
 - [ ] User can easily run this
-- [ ] User can select which playlists to shuffle
+- [ ] Support playlists over 100 items (update func)
 - [ ] Cleanup
 - [ ] GUI?
 

@@ -2,12 +2,8 @@
 {% block body %}
 <div>
     <h2>Select the playlists you'd like to shuffle:</h2>
-    <!-- <ul>
-        {% for pl in playlists %}
-        <li>{{ pl["name"] }} - {{ pl["id"] }}</li>
-        {% endfor %}
-    </ul> -->
-    <form action="/update" method="post">
+    <p>Once you hit submit, you'll have to wait for the page to load. Don't cancel it!</p>
+    <form action="{{ url_for('update_rt') }}" method="post">
         <div class="container">
             {% for pl in playlists %}
             <div class="item">
