@@ -1,11 +1,25 @@
 {% extends "default.html" %}
 {% block body %}
 <div>
-    <h2>Select playlists to shuffle:</h2>
-    <ul>
+    <h2>Select the playlists you'd like to shuffle:</h2>
+    <!-- <ul>
         {% for pl in playlists %}
         <li>{{ pl["name"] }} - {{ pl["id"] }}</li>
         {% endfor %}
-    </ul>
+    </ul> -->
+    <form action="/update" method="post">
+        <div class="container">
+            {% for pl in playlists %}
+            <div class="item">
+                <label for="{{pl['name']}}">{{pl['name']}}</label>
+                <input type="checkbox" value="{{pl['id']}}" name="{{pl['name']}}" />
+            </div>
+            {% endfor %}
+        </div>
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+    <br>
+    <br>
 </div>
 {% endblock %}

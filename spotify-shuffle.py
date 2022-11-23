@@ -50,9 +50,9 @@ def home_rt():
 
         return render_template("home.html", playlists=playlists)
     else:
-        print("failed to find header" + json.dumps(session, indent=2))
+        if session == {}:
+            return redirect("/login")
         return render_template('error.html', error=json.dumps(session, indent=2))
-        # return redirect("/login")
 
 
 @app.route('/login/')
@@ -96,21 +96,33 @@ def callback_rt():
     return redirect("/")
 
 
-@app.route("/update/<playlist_ids>")
-def update_playlists_rt(playlist_ids: str):
-    # playlist_ids should be a comma separated list
-    # e.g. 7lS8RnhxDyUGdola0ZGQJS,4WzLv9T6sZ0CvwNdknqH88
-    # Get current user's playlists
+@app.route("/update", methods=["POST"])
+def update_playlists_rt():
+    try:
+        print(request.form)
+        playlist_ids = []
+        for pid in request.form.values():
+            playlist_ids.append(pid)
+        # playlist_ids should be a comma separated list
+        # e.g. 7lS8RnhxDyUGdola0ZGQJS,4WzLv9T6sZ0CvwNdknqH88
+        playlist_ids = ",".join(playlist_ids)
+        print(playlist_ids)
+    except Exception:
+        return render_template('error.html', error=traceback.format_exc())
+    
     try:
         header = session["header"]
     except Exception:
         return redirect("/login")
 
+    # Get current user's playlists
     playlists = []
     # This should be updated from the last time the user went to /home
     with open('playlists.json', 'r') as f:
         playlists = json.loads(f.read())
 
+    # print("playlists")
+    # print(playlists)
     # playlists_to_update = {
         # "7lS8RnhxDyUGdola0ZGQJS": {},  # Test Playlist
         # "4WzLv9T6sZ0CvwNdknqH88": {}  # Sassy Pop
@@ -118,21 +130,23 @@ def update_playlists_rt(playlist_ids: str):
     playlists_to_update = {}
     for pid in playlist_ids.split(","):
         playlists_to_update[pid] = {}
-    # print(playlists_to_update)
 
     # Fill playlists_to_update with the actual playlist items
     for pl in playlists:
         for _id, val in playlists_to_update.items():
             if _id == pl["id"]:
                 playlists_to_update[_id] = pl
+    # print(playlists_to_update)
     # return "<pre>"+json.dumps(playlists_to_update, indent=2)+"</pre>"
 
     ui_obj = {}
     for _playlist in playlists_to_update.values():
         try:
             # Get tracks from a playlist
+            print(_playlist)
             tracks = get_playlist_tracks(
                 _playlist["id"], _playlist["tracks"]["total"], header)
+            # return render_template('error.html', error=json.dumps(_playlist, indent=2))
 
             track_uris = []
             track_uris_str = []
@@ -160,7 +174,7 @@ def update_playlists_rt(playlist_ids: str):
                 ui_obj[_playlist["name"]] = obj
                 continue
             return render_template('error.html', error=json.dumps(resp, indent=2))
-        except Exception as e:
+        except Exception:
             return render_template('error.html', error=traceback.format_exc())
     return render_template('updated.html', updates=ui_obj)
 
