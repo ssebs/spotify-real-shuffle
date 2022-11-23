@@ -67,45 +67,49 @@ def callback():
     playlists = None
     if "access_token" not in r.json():
         print("Failed to login")
-        return "Failed to login"
+        return "Failed to login - no access token in <pre>" + r.json() + "</pre>"
     print("Logged in!")
 
     access_token = r.json()["access_token"]
     header = {"Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"}
 
+    # Get current user's playlists
     playlists = get_playlists(header)
     test_playlist = None
 
-    playlist_ids = []
+    # playlist_ids = []
     for pl in playlists['items']:
         if pl["name"] == "Test Playlist":
             test_playlist = pl
-            playlist_ids.append(pl["id"])
+            # playlist_ids.append(pl["id"])
     # print(pl)
     
-    tracks = get_playlist_tracks(playlist_ids[0], header)
+    # Get tracks from a playlist
+    tracks = get_playlist_tracks(test_playlist["id"], header)
     track_uris = []
-    track_uris_str = []
+    # track_uris_str = []
     for track in tracks['items']:
         track_uris.append(track["track"]["uri"])
-        track_uris_str.append(f'{track["track"]["uri"]} - {track["track"]["name"]}')
+        # track_uris_str.append(f'{track["track"]["uri"]} - {track["track"]["name"]}')
     
     # Re-order
     idx_list = list(range(len(track_uris)))
     random.shuffle(idx_list)
     shuffled = [track_uris[i] for i in idx_list]
-    print(shuffled)
+    # print(shuffled)
     obj = {
         "shuffled": shuffled,
         "original": track_uris
     }
+    
+    # Update playlist
     # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-    resp = update_playlist_items(",".join(shuffled), playlist_ids[0], header)
+    # resp = update_playlist_items(",".join(shuffled), test_playlist["id"], header)
     # if "error" in resp:
     #     # 
 
-    return f"<html><body><a href='/'>home</a><pre>{json.dumps(resp, indent=2)}</pre></body></html>"
+    return f"<html><body><a href='/'>home</a><pre>{json.dumps(tracks, indent=2)}</pre></body></html>"
 
 
 def get_playlists(header: dict):
@@ -119,7 +123,13 @@ def get_playlist_tracks(playlist_id: str, header: dict):
     if header is None:
         print("vars not set")
         return False
-    r = requests.get(api_base_uri+"/playlists/"+playlist_id+"/tracks", headers=header)
+    count = 0
+    limit = 2
+    offset = limit * count
+    fields = "&fields=href,items(track(name,id,uri))"
+    query_params = f"?limit={limit}&offset={offset}{fields}"
+    url = api_base_uri + "/playlists/" + playlist_id + "/tracks" + query_params
+    r = requests.get(url, headers=header)
     return r.json()
 
 def update_playlist_items(uris: str, playlist_id: str, header: dict):
