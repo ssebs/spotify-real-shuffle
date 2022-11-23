@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, request, redirect, session
+from flask import Flask, request, redirect, session, render_template
 
 import traceback
 import json
@@ -28,18 +28,35 @@ try:
         secrets = json.loads(f.read())
 except Exception as e:
     print(e)
+    print("You must create a secrets.json file. See https://github.com/ssebs/spotify-real-shuffle/")
     exit(1)
 
 # Start processing
 app = Flask(__name__)
 app.secret_key = datetime.now().isoformat()
-print("Spotify Shuffle")
+# print("Spotify Shuffle")
 # print(f"cid: {secrets['client_id']}, cs: {secrets['client_secret']}")
 
 
 @app.route('/')
+@app.route('/home/')
+def home_rt():
+    if "header" in session:
+        header = session["header"]
+
+        playlists = get_playlists(header)
+        with open("playlists.json", "w") as f:
+            f.write(json.dumps(playlists, indent=2))
+
+        return render_template("home.html", playlists=playlists)
+    else:
+        print("failed to find header" + json.dumps(session, indent=2))
+        return render_template('error.html', error=json.dumps(session, indent=2))
+        # return redirect("/login")
+
+
 @app.route('/login/')
-def login():
+def login_rt():
     print("Logging in...")
     r = requests.get(auth_uri, params={
         "response_type": "code",
@@ -51,65 +68,66 @@ def login():
 
 
 @app.route("/callback/")
-def callback():
+def callback_rt():
     if "error" in request.args:
         return request.args["error"]
 
-    code = request.args['code']
     secret = secrets['client_id'] + ":" + secrets["client_secret"]
     auth_encoded = base64.b64encode(secret.encode(("ascii"))).decode("ascii")
     # Get access token
     r = requests.post(token_uri, data={
         "grant_type": "authorization_code",
-        "code": code,
+        "code": request.args['code'],
         "redirect_uri": "http://localhost:8080/callback"
     }, headers={
         "Authorization": f"Basic {str(auth_encoded)}",
         "Content-Type": "application/x-www-form-urlencoded"
     })
 
-    playlists = None
     if "access_token" not in r.json():
         print("Failed to login")
-        return "Failed to login - no access token in <pre>" + r.text + f"</pre><strong>{r.status_code}</strong>"
+        return "Failed to login - no access token in <pre>" + r.text + f"</pre><strong>HTTP {r.status_code}</strong>"
     print("Logged in!")
 
-    access_token = r.json()["access_token"]
-    header = {"Authorization": f"Bearer {access_token}",
+    header = {"Authorization": f"Bearer {r.json()['access_token']}",
               "Content-Type": "application/json"}
-
     session["header"] = header
-    update_playlists_rt()
 
-    return redirect('/update')
-    # return f"<html><body><a href='/'>home</a><pre>{json.dumps(tracks, indent=2)}</pre></body></html>"
+    return redirect("/")
 
 
-@app.route("/update")
-def update_playlists_rt():
+@app.route("/update/<playlist_ids>")
+def update_playlists_rt(playlist_ids: str):
+    # playlist_ids should be a comma separated list
+    # e.g. 7lS8RnhxDyUGdola0ZGQJS,4WzLv9T6sZ0CvwNdknqH88
     # Get current user's playlists
     try:
         header = session["header"]
     except Exception:
-        return redirect("/")
-    playlists = get_playlists(header)
-    with open("playlists.json", "w") as f:
-        f.write(json.dumps(playlists, indent=2))
-    test_playlist = None
+        return redirect("/login")
 
-    # playlist_ids = []
-    playlists_to_update = {
-        "7lS8RnhxDyUGdola0ZGQJS": {},  # Test Playlist
-        "4WzLv9T6sZ0CvwNdknqH88": {}  # Sassy Pop
-    }
+    playlists = []
+    # This should be updated from the last time the user went to /home
+    with open('playlists.json', 'r') as f:
+        playlists = json.loads(f.read())
+
+    # playlists_to_update = {
+        # "7lS8RnhxDyUGdola0ZGQJS": {},  # Test Playlist
+        # "4WzLv9T6sZ0CvwNdknqH88": {}  # Sassy Pop
+    # }
+    playlists_to_update = {}
+    for pid in playlist_ids.split(","):
+        playlists_to_update[pid] = {}
+    # print(playlists_to_update)
+
+    # Fill playlists_to_update with the actual playlist items
     for pl in playlists:
         for _id, val in playlists_to_update.items():
             if _id == pl["id"]:
                 playlists_to_update[_id] = pl
     # return "<pre>"+json.dumps(playlists_to_update, indent=2)+"</pre>"
 
-    ui_obj = []
-
+    ui_obj = {}
     for _playlist in playlists_to_update.values():
         try:
             # Get tracks from a playlist
@@ -119,10 +137,9 @@ def update_playlists_rt():
             track_uris = []
             track_uris_str = []
             for track in tracks:
-                # track_uris_str.append(track)
                 track_uris.append(track["track"]["uri"])
                 track_uris_str.append(
-                    f'{track["track"]["uri"]} - {track["track"]["name"]}')
+                    f'{track["track"]["name"]} - {track["track"]["uri"]}')
 
             # Re-order
             idx_list = list(range(len(track_uris)))
@@ -140,12 +157,12 @@ def update_playlists_rt():
             resp = update_playlist_items(
                 ",".join(shuffled), _playlist["id"], header)
             if "snapshot_id" in resp:
-                ui_obj.append(obj)
+                ui_obj[_playlist["name"]] = obj
                 continue
-            return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><pre>{json.dumps(resp, indent=2)}</pre></body></html>"
+            return render_template('error.html', error=json.dumps(resp, indent=2))
         except Exception as e:
-            return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><br/>500 Error: <pre>{traceback.format_exc()}</pre></body></html>"
-    return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><h2>Shuffled!</h2><pre>{json.dumps(ui_obj, indent=2)}</pre></body></html>"
+            return render_template('error.html', error=traceback.format_exc())
+    return render_template('updated.html', updates=ui_obj)
 
 
 def get_playlists(header: dict):

@@ -1,0 +1,27 @@
+{% extends "default.html" %}
+{% block body %}
+<div>
+    {% if updates.keys()|length == 1 %}
+        <h2>Updated playlist!</h2>
+    {% else %}
+        <h2>Updated playlists!</h2>
+    {% endif %}
+    <ul>
+        {% for name, update in updates.items() %}
+        <li>
+            {{ name }}
+            <ul>
+                {% for type, values in update.items() %}
+                    <li>{{ type }}</li>
+                    <ul>
+                        {% for song in values: %}
+                        <li>{{ song }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

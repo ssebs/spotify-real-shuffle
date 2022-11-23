@@ -1,0 +1,11 @@
+{% extends "default.html" %}
+{% block body %}
+<div>
+    <h2>Select playlists to shuffle:</h2>
+    <ul>
+        {% for pl in playlists %}
+        <li>{{ pl["name"] }} - {{ pl["id"] }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
