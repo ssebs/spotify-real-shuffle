@@ -33,4 +33,6 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
       ```
 - 
 ## Usage
-<!-- - `$ python spotify-shuffle.py` -->
+- `$ python spotify-shuffle.py`
+- Open a web browser to http://127.0.0.1:8080 
+    - Click "Update" to keep shuffling
