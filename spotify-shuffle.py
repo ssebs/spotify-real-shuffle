@@ -98,45 +98,54 @@ def update_playlists_rt():
     test_playlist = None
 
     # playlist_ids = []
-    uris_to_update = [
-        "spotify:playlist:7lS8RnhxDyUGdola0ZGQJS", # Test Playlist
-        "spotify:playlist:4WzLv9T6sZ0CvwNdknqH88" # Sassy Pop
-    ]
+    playlists_to_update = {
+        "7lS8RnhxDyUGdola0ZGQJS": {},  # Test Playlist
+        "4WzLv9T6sZ0CvwNdknqH88": {}  # Sassy Pop
+    }
     for pl in playlists:
-        if pl["name"] == "Test Playlist":
-            test_playlist = pl
-            # playlist_ids.append(pl["id"])
-    # print(pl)
-    try:
-        # Get tracks from a playlist
-        tracks = get_playlist_tracks(test_playlist["id"], test_playlist["tracks"]["total"], header)
+        for _id, val in playlists_to_update.items():
+            if _id == pl["id"]:
+                playlists_to_update[_id] = pl
+    # return "<pre>"+json.dumps(playlists_to_update, indent=2)+"</pre>"
 
-        track_uris = []
-        track_uris_str = []
-        for track in tracks:
-            # track_uris_str.append(track)
-            track_uris.append(track["track"]["uri"])
-            track_uris_str.append(f'{track["track"]["uri"]} - {track["track"]["name"]}')
+    ui_obj = []
 
-        # Re-order
-        idx_list = list(range(len(track_uris)))
-        random.shuffle(idx_list)
-        shuffled = [track_uris[i] for i in idx_list]
-        shuffled_str = [track_uris_str[i] for i in idx_list]
-        # print(shuffled)
-        obj = {
-            "original": track_uris_str,
-            "shuffled": shuffled_str
-        }
+    for _playlist in playlists_to_update.values():
+        try:
+            # Get tracks from a playlist
+            tracks = get_playlist_tracks(
+                _playlist["id"], _playlist["tracks"]["total"], header)
 
-        # Update playlist
-        # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-        resp = update_playlist_items(",".join(shuffled), test_playlist["id"], header)
-        if "snapshot_id" in resp:
-            return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><h2>Shuffled!</h2><pre>{json.dumps(obj, indent=2)}</pre></body></html>"
-        return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><pre>{json.dumps(obj, indent=2)}</pre></body></html>"
-    except Exception as e:
-        return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><br/>500 Error: <pre>{traceback.format_exc()}</pre></body></html>"
+            track_uris = []
+            track_uris_str = []
+            for track in tracks:
+                # track_uris_str.append(track)
+                track_uris.append(track["track"]["uri"])
+                track_uris_str.append(
+                    f'{track["track"]["uri"]} - {track["track"]["name"]}')
+
+            # Re-order
+            idx_list = list(range(len(track_uris)))
+            random.shuffle(idx_list)
+            shuffled = [track_uris[i] for i in idx_list]
+            shuffled_str = [track_uris_str[i] for i in idx_list]
+            # print(shuffled)
+            obj = {
+                "original": track_uris_str,
+                "shuffled": shuffled_str
+            }
+
+            # Update playlist
+            # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
+            resp = update_playlist_items(
+                ",".join(shuffled), _playlist["id"], header)
+            if "snapshot_id" in resp:
+                ui_obj.append(obj)
+                continue
+            return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><pre>{json.dumps(resp, indent=2)}</pre></body></html>"
+        except Exception as e:
+            return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><br/>500 Error: <pre>{traceback.format_exc()}</pre></body></html>"
+    return f"<html><body><a href='/'>End to End</a> <br/> <a href='/update'>Update</a><h2>Shuffled!</h2><pre>{json.dumps(ui_obj, indent=2)}</pre></body></html>"
 
 
 def get_playlists(header: dict):
@@ -154,7 +163,7 @@ def get_playlist_tracks(playlist_id: str, tracks_total: int, header: dict):
     # print(f"tracks total: {tracks_total}")
     tracks = []
     count = 0
-    limit = 20
+    limit = 100
 
     bad_var_name = tracks_total
     if tracks_total > limit:
