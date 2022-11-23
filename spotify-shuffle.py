@@ -221,6 +221,9 @@ def update_playlist_items(uris: str, playlist_id: str, header: dict):
         print("vars not set")
         return False
     try:
+        # See https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
+        # TODO: Stop replaceing and instead re-order. 
+        # TODO: Support more than 100 items
         r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
             "uris": uris,
         }, headers=header)
