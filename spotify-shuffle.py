@@ -107,11 +107,10 @@ def update_rt():
             playlist_ids.append(pid)
         # playlist_ids should be a comma separated list
         # e.g. 7lS8RnhxDyUGdola0ZGQJS,4WzLv9T6sZ0CvwNdknqH88
-        playlist_ids = ",".join(playlist_ids)
         # print(playlist_ids)
     except Exception:
         return render_template('error.html', error=traceback.format_exc())
-    
+
     try:
         header = session["header"]
     except Exception:
@@ -123,8 +122,9 @@ def update_rt():
     with open('playlists.json', 'r') as f:
         playlists = json.loads(f.read())
 
+    # TODO: Move this to another function
     playlists_to_update = {}
-    for pid in playlist_ids.split(","):
+    for pid in playlist_ids:
         playlists_to_update[pid] = {}
 
     # Fill playlists_to_update with the actual playlist items
@@ -142,6 +142,14 @@ def update_rt():
             tracks = get_playlist_tracks(
                 _playlist["id"], _playlist["tracks"]["total"], header)
             # return render_template('error.html', error=json.dumps(_playlist, indent=2))
+
+            # for sanitization
+            regex = r'/[^A-Za-z0-9]+/g'
+            cleaned_name = _playlist["name"].replace(
+                regex, '-').replace(" ", "-").lower()
+            # Save a copy of the old version
+            with open(f"{cleaned_name}-tracks-backup.json", "w") as f:
+                f.write(json.dumps(tracks))
 
             track_uris = []
             track_uris_str = []
@@ -162,9 +170,13 @@ def update_rt():
             }
 
             # Update playlist
-            # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-            resp = update_playlist_items(
-                ",".join(shuffled), _playlist["id"], header)
+            # OLD WAY
+            # # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
+            # resp = update_playlist_items(
+            #     ",".join(shuffled), _playlist["id"], header)
+            # NEW WAY
+            resp = update_playlist_items(shuffled, _playlist["id"], header)
+
             if "snapshot_id" in resp:
                 # Successful update, keep looping
                 ui_obj[_playlist["name"]] = obj
@@ -222,7 +234,7 @@ def update_playlist_items(uris: str, playlist_id: str, header: dict):
         return False
     try:
         # See https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-        # TODO: Stop replaceing and instead re-order. 
+        # TODO: Stop replaceing and instead re-order.
         # TODO: Support more than 100 items
         # Maybe shuffle first 100, then loop?
         r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
