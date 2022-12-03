@@ -228,19 +228,69 @@ def get_playlist_tracks(playlist_id: str, tracks_total: int, header: dict):
     return tracks
 
 
-def update_playlist_items(uris: str, playlist_id: str, header: dict):
+def update_playlist_items(uris: list, playlist_id: str, header: dict):
     if header is None:
         print("vars not set")
         return False
     try:
-        # See https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-        # TODO: Stop replaceing and instead re-order.
-        # TODO: Support more than 100 items
-        # Maybe shuffle first 100, then loop?
-        r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
-            "uris": uris,
-        }, headers=header)
-        return r.json()
+        print("uris")
+        print(json.dumps(uris, indent=2))
+        # NEW WAY
+        # remove old songs first, then add new ones
+        multiple = 3
+        temp_ret = {"deleted": [], "added": []}
+        # API has a limit of 100 items, so lets loop
+
+        # Remove items
+        # as many times divided by 100 + 1
+        print("Deleting tracks")
+        # idx should be # of times - 1
+        # old - for idx, uri in enumerate(range((len(uris) % multiple) + 1)):
+        # new
+        count = 0
+        for idx, uri in enumerate(range(math.ceil(len(uris) / multiple)), start=1):
+            # print(f"{idx} - {uris[uri]}")
+            if uris[uri] is None:
+                break
+            # r = requests.delete(api_base_uri+"/playlists/"+playlist_id+"/tracks",
+            data = {
+                "tracks": uris[count*multiple: idx*multiple],
+            }
+            # temp_ret["deleted"].append(data)
+            # , headers=header)
+            # check for err
+            count += 1
+        # print("deleted:")
+        # print(json.dumps(temp_ret["deleted"], indent=2))
+
+        # Add items
+        # print("Adding tracks")
+        count = 0
+        for idx, uri in enumerate(range(math.ceil(len(uris) / multiple)), start=1):
+            if uri is None:
+                break
+            data = {
+                "uris": uris[count*multiple: idx*multiple],
+            }
+            r = requests.post(api_base_uri+"/playlists/"+playlist_id+"/tracks",
+                              json=data, headers=header)
+            temp_ret["resp"] = r.json()
+            count += 1
+            temp_ret["added"].append(data)
+        # print("Added: ")
+        # print(json.dumps(temp_ret["added"], indent=2))
+
+        return temp_ret
+
+        # OLD WAY
+        # # See https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
+        # # TODO: Stop replaceing and instead re-order.
+        # # TODO: Support more than 100 items
+        # # Maybe shuffle first 100, then loop?
+        # r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
+        #     "uris": uris,
+        # }, headers=header)
+        # return r.json()
     except Exception as e:
         print(e)
         return {"Error": e, "Request": r.text}
