@@ -13,8 +13,34 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 - [ ] Cleanup
 - [ ] GUI?
 
+## Prereqs
+- Setup your Spotify Developer account (you'll need a regular Spotify account)
+    - https://developer.spotify.com/dashboard/
+    - Click **Log in** and log in with your regular Spotify account
+    - Click **CREATE AN APP**
+        - Enter something for the name and description, it can be whatever you want
+        - Click **Create**
+    - Copy the **Client ID**, you'll need this
+    - Click **SHOW CLIENT SECRET**
+    - Copy the **Client Secret**, you'll need this
+- Clone this repo or download the zip
+    - Clone:
+        - `$ git clone https://github.com/ssebs/spotify-real-shuffle`
+    - Zip:
+        - Go to https://github.com/ssebs/spotify-real-shuffle
+        - Click the green Code button > Download ZIP
+- Create a `secrets.json` file
+- Within the `spotify-real-shuffle/` directory, create a new text file called `secrets.json` with the contents below. (Replace id and secret with the ones you copied earlier)
+```json
+{
+    "client_id": "<somehashvalue>",
+    "client_secret": "<somehashvalue>"
+}
+```
+
+
 ## Installation
-- git clone this repo
+- Install python if not already installed (or, run the [binary release](https://github.com/ssebs/spotify-real-shuffle/releases/))
 - Linux/Mac
     - `$ python -m venv venv`
     - `$ source ./venv/bin/activate` 
@@ -24,18 +50,24 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
     - `PS> .\venv\Scripts\Activate.ps1`
         > If you get an execution policy warning, open PowerShell as an administrator and run `Set-ExecutionPolicy RemoteSigned`
     - `(venv) PS> pip install -r requirements.txt`
-- Create a `secrets.json` file with your spotify dev api
-    - Should look like this:
-    - ```json
-        {
-            "client_id": "<somehashvalue>",
-            "client_secret": "<somehashvalue>"
-        }
-      ```
-- 
+
 ## Usage
-- `$ python spotify-shuffle.py`
-- Open a web browser to http://127.0.0.1:8080 
-    - Login
-    - Select playlists to update
-        > Note: You must be the playlist owner
+- Binary:
+    - Download the spotify-shuffle.exe from the [binary release's page](https://github.com/ssebs/spotify-real-shuffle/releases/))
+    - Create the `secrets.json` file as noted in the prereqs
+    - Double click the exe and open a web browser to http://127.0.0.1:8080 
+- From Source:
+    - After setting up the venv above
+    - `$ python spotify-shuffle.py`
+    - Open a web browser to http://127.0.0.1:8080 
+        - Login
+        - Select playlists to update
+            > Note: You must be the playlist owner
+
+## Build
+- `pyinstaller -c -F --add-data "templates;templates" --add-data "static;static" spotify-shuffle.py`
+    - Built file is under `./dist/`
+    - `secrets.json` file needs to be next to the binary
+
+## LICENSE
+[GPL V3](./LICENSE)

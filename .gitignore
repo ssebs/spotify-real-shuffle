@@ -1,5 +1,7 @@
 venv/
 __pycache__/
 __pycache__
+build/
+dist/
 secrets.json
 *.json
