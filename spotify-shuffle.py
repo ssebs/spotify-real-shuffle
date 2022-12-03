@@ -162,6 +162,7 @@ def update_rt():
             idx_list = list(range(len(track_uris)))
             random.shuffle(idx_list)
             shuffled = [track_uris[i] for i in idx_list]
+            shuffled_del = [{"uri": track_uris[i]} for i in idx_list]
             shuffled_str = [track_uris_str[i] for i in idx_list]
             # print(shuffled)
             obj = {
@@ -175,7 +176,7 @@ def update_rt():
             # resp = update_playlist_items(
             #     ",".join(shuffled), _playlist["id"], header)
             # NEW WAY
-            resp = update_playlist_items(shuffled, _playlist["id"], header)
+            resp = update_playlist_items(shuffled, shuffled_del, _playlist["id"], header)
 
             if "snapshot_id" in resp:
                 # Successful update, keep looping
@@ -228,7 +229,7 @@ def get_playlist_tracks(playlist_id: str, tracks_total: int, header: dict):
     return tracks
 
 
-def update_playlist_items(uris: list, playlist_id: str, header: dict):
+def update_playlist_items(uris: list, uris_del: list, playlist_id: str, header: dict):
     if header is None:
         print("vars not set")
         return False
@@ -240,45 +241,47 @@ def update_playlist_items(uris: list, playlist_id: str, header: dict):
         multiple = 3
         temp_ret = {"deleted": [], "added": []}
         # API has a limit of 100 items, so lets loop
+        # as many times divided by ceil(multiple)
 
         # Remove items
-        # as many times divided by 100 + 1
         print("Deleting tracks")
-        # idx should be # of times - 1
-        # old - for idx, uri in enumerate(range((len(uris) % multiple) + 1)):
-        # new
-        count = 0
-        for idx, uri in enumerate(range(math.ceil(len(uris) / multiple)), start=1):
-            # print(f"{idx} - {uris[uri]}")
-            if uris[uri] is None:
+        for idx, uri in enumerate(range(math.ceil(len(uris_del) / multiple)), start=1):
+            if uri is None:
                 break
-            # r = requests.delete(api_base_uri+"/playlists/"+playlist_id+"/tracks",
             data = {
-                "tracks": uris[count*multiple: idx*multiple],
+                "tracks": uris_del[(idx - 1) * multiple: idx * multiple],
             }
-            # temp_ret["deleted"].append(data)
-            # , headers=header)
-            # check for err
-            count += 1
-        # print("deleted:")
-        # print(json.dumps(temp_ret["deleted"], indent=2))
+            try:
+                r = requests.delete(api_base_uri+"/playlists/"+playlist_id+"/tracks",
+                                json=data, headers=header)
+                if "error" in r.json():
+                    return r.json()
+            except Exception as e:
+                print(e)
+                return r.text
+            temp_ret["resp-del"] = r.json()
+            temp_ret["deleted"].append(data)
+        print("Delete complete")
 
         # Add items
-        # print("Adding tracks")
-        count = 0
+        print("Adding tracks")
         for idx, uri in enumerate(range(math.ceil(len(uris) / multiple)), start=1):
             if uri is None:
                 break
             data = {
-                "uris": uris[count*multiple: idx*multiple],
+                "uris": uris[(idx - 1) * multiple: idx * multiple],
             }
-            r = requests.post(api_base_uri+"/playlists/"+playlist_id+"/tracks",
-                              json=data, headers=header)
-            temp_ret["resp"] = r.json()
-            count += 1
+            try:
+                r = requests.post(api_base_uri+"/playlists/"+playlist_id+"/tracks",
+                                  json=data, headers=header)
+                if "error" in r.json():
+                    return r.json()
+            except Exception as e:
+                print(e)
+                return r.text
+            temp_ret["resp-add"] = r.json()
             temp_ret["added"].append(data)
-        # print("Added: ")
-        # print(json.dumps(temp_ret["added"], indent=2))
+        print("Adds complete")
 
         return temp_ret
 
