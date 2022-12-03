@@ -9,7 +9,7 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 - [x] Support Pagination (max 100 by default)
 - [x] User can select which playlists to shuffle
 - [ ] User can easily run this
-- [ ] Support playlists over 100 items (update func)
+- [x] Support playlists over 100 items (update func)
 - [ ] Cleanup
 - [ ] GUI?
 
@@ -36,4 +36,6 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 ## Usage
 - `$ python spotify-shuffle.py`
 - Open a web browser to http://127.0.0.1:8080 
-    - Click "Update" to keep shuffling
+    - Login
+    - Select playlists to update
+        > Note: You must be the playlist owner

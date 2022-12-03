@@ -3,6 +3,7 @@ from flask import Flask, request, redirect, session, render_template
 
 import traceback
 import json
+import os
 import requests
 import base64
 import random
@@ -19,6 +20,7 @@ scopes = [
 api_base_uri = "https://api.spotify.com/v1"
 auth_uri = "https://accounts.spotify.com/authorize"
 token_uri = "https://accounts.spotify.com/api/token"
+backup_path = "./backups/"
 access_token = None
 header = None
 # Load secrets
@@ -26,6 +28,8 @@ secrets = {}
 try:
     with open('secrets.json', 'r') as f:
         secrets = json.loads(f.read())
+    if not os.path.exists(backup_path):
+        os.mkdir(backup_path)
 except Exception as e:
     print(e)
     print("You must create a secrets.json file. See https://github.com/ssebs/spotify-real-shuffle/")
@@ -45,7 +49,7 @@ def home_rt():
         header = session["header"]
 
         playlists = get_playlists(header)
-        with open("playlists.json", "w") as f:
+        with open(backup_path+"playlists.json", "w") as f:
             f.write(json.dumps(playlists, indent=2))
 
         return render_template("home.html", playlists=playlists)
@@ -119,7 +123,7 @@ def update_rt():
     # Get current user's playlists
     playlists = []
     # This should be updated from the last time the user went to /home
-    with open('playlists.json', 'r') as f:
+    with open(backup_path+'playlists.json', 'r') as f:
         playlists = json.loads(f.read())
 
     # TODO: Move this to another function
@@ -148,7 +152,7 @@ def update_rt():
             cleaned_name = _playlist["name"].replace(
                 regex, '-').replace(" ", "-").lower()
             # Save a copy of the old version
-            with open(f"{cleaned_name}-tracks-backup.json", "w") as f:
+            with open(f"{backup_path}{cleaned_name}-tracks-backup.json", "w") as f:
                 f.write(json.dumps(tracks))
 
             track_uris = []
@@ -166,19 +170,15 @@ def update_rt():
             shuffled_str = [track_uris_str[i] for i in idx_list]
             # print(shuffled)
             obj = {
-                "original": track_uris_str,
-                "shuffled": shuffled_str
+                "Original": track_uris_str,
+                "Shuffled": shuffled_str
             }
 
             # Update playlist
-            # OLD WAY
-            # # https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-            # resp = update_playlist_items(
-            #     ",".join(shuffled), _playlist["id"], header)
-            # NEW WAY
-            resp = update_playlist_items(shuffled, shuffled_del, _playlist["id"], header)
+            resp = update_playlist_items(
+                shuffled, shuffled_del, _playlist["id"], header)
 
-            if "snapshot_id" in resp:
+            if "status" in resp and resp["status"] == "OK":
                 # Successful update, keep looping
                 ui_obj[_playlist["name"]] = obj
                 continue
@@ -234,17 +234,16 @@ def update_playlist_items(uris: list, uris_del: list, playlist_id: str, header: 
         print("vars not set")
         return False
     try:
-        print("uris")
-        print(json.dumps(uris, indent=2))
-        # NEW WAY
-        # remove old songs first, then add new ones
-        multiple = 3
+        # print("uris")
+        # print(json.dumps(uris, indent=2))
+
+        # API has a limit of 100 items, so lets loop as many times divided by ceil(multiple)
+        # Remove old songs first, then add new ones
+        multiple = 100
         temp_ret = {"deleted": [], "added": []}
-        # API has a limit of 100 items, so lets loop
-        # as many times divided by ceil(multiple)
 
         # Remove items
-        print("Deleting tracks")
+        # print("Deleting tracks")
         for idx, uri in enumerate(range(math.ceil(len(uris_del) / multiple)), start=1):
             if uri is None:
                 break
@@ -253,7 +252,7 @@ def update_playlist_items(uris: list, uris_del: list, playlist_id: str, header: 
             }
             try:
                 r = requests.delete(api_base_uri+"/playlists/"+playlist_id+"/tracks",
-                                json=data, headers=header)
+                                    json=data, headers=header)
                 if "error" in r.json():
                     return r.json()
             except Exception as e:
@@ -261,10 +260,10 @@ def update_playlist_items(uris: list, uris_del: list, playlist_id: str, header: 
                 return r.text
             temp_ret["resp-del"] = r.json()
             temp_ret["deleted"].append(data)
-        print("Delete complete")
+        # print("Delete complete")
 
         # Add items
-        print("Adding tracks")
+        # print("Adding tracks")
         for idx, uri in enumerate(range(math.ceil(len(uris) / multiple)), start=1):
             if uri is None:
                 break
@@ -281,19 +280,20 @@ def update_playlist_items(uris: list, uris_del: list, playlist_id: str, header: 
                 return r.text
             temp_ret["resp-add"] = r.json()
             temp_ret["added"].append(data)
-        print("Adds complete")
+        # print("Adds complete")
+
+        # Check status of update
+        if "resp-del" in temp_ret and "snapshot_id" in temp_ret["resp-del"]:
+            # Deletion succeeded
+            if "resp-add" in temp_ret and "snapshot_id" in temp_ret["resp-add"]:
+                # Adding back succeeded
+                temp_ret["status"] = "OK"
+            else:
+                temp_ret["status"] = "DEL OK, ADD FAIL"
+        else:
+            temp_ret["status"] = "DEL FAIL, ADD UNKNOWN"
 
         return temp_ret
-
-        # OLD WAY
-        # # See https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks
-        # # TODO: Stop replaceing and instead re-order.
-        # # TODO: Support more than 100 items
-        # # Maybe shuffle first 100, then loop?
-        # r = requests.put(api_base_uri+"/playlists/"+playlist_id+"/tracks", params={
-        #     "uris": uris,
-        # }, headers=header)
-        # return r.json()
     except Exception as e:
         print(e)
         return {"Error": e, "Request": r.text}
