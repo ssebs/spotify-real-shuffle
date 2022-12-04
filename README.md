@@ -23,6 +23,9 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
     - Copy the **Client ID**, you'll need this
     - Click **SHOW CLIENT SECRET**
     - Copy the **Client Secret**, you'll need this
+    - Click **Edit Settings** in green
+        - Under **Redirect URIs**, add: `http://localhost:8080/callback`
+        - Save
 - Clone this repo or download the zip
     - Clone:
         - `$ git clone https://github.com/ssebs/spotify-real-shuffle`
