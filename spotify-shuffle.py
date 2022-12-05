@@ -9,6 +9,7 @@ import base64
 import random
 from datetime import datetime
 import math
+import webbrowser
 
 # VARS
 scopes = [
@@ -40,6 +41,9 @@ app = Flask(__name__)
 app.secret_key = datetime.now().isoformat()
 # print("Spotify Shuffle")
 # print(f"cid: {secrets['client_id']}, cs: {secrets['client_secret']}")
+
+if not os.environ.get("WERKZEUG_RUN_MAIN"):
+    webbrowser.open("http://127.0.0.1:8080", new=0, autoraise=True)
 
 
 @app.route('/')
@@ -191,6 +195,37 @@ def update_rt():
             return render_template('error.html', error=traceback.format_exc())
     # All updates complete
     return render_template('updated.html', updates=ui_obj)
+
+
+@app.route("/setup/", methods=["GET", "POST"])
+def setup_rt():
+    # Don't do setup if we already have the header configured
+    if "header" in session:
+        return redirect("/home")
+    
+    # User fills out form for client id and secret, POST's it back here to save as a file
+    if request.method == 'POST':
+        # Save credentials, then redirect to login
+        try:
+            if "client_id" in request.form and "client_secret" in request.form:
+                _id = request.form.get("client_id")
+                _secret = request.form.get("client_secret")
+
+                with open("secrets.json", "w") as f:
+                    f.write(json.dumps({
+                        "client_id": _id,
+                        "client_secret": _secret
+                    }))
+
+                return redirect("/login")
+            else:
+                msg = "The client_id or client_secret field is missing. If you submitted the form, report this bug. "
+                return render_template('error.html', error=msg)
+        except Exception as e:
+            return render_template('error.html', error=json.dumps(e, indent=2))
+    else:
+        return render_template("setup.html")
+        # Render site
 
 
 def get_playlists(header: dict):

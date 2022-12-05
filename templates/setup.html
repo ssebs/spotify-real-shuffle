@@ -1,0 +1,20 @@
+{% extends "default.html" %}
+{% block body %}
+<div>
+    <h2>Please enter the client ID and client secret you generated from https://developer.spotify.com/dashboard/:</h2>
+    <p>(See https://github.com/ssebs/spotify-real-shuffle/#prereqs)</p>
+    <form action="{{ url_for('setup_rt') }}" method="post">
+        <div class="container">
+            <label for="client_id">Client ID</label>
+            <input type="text" name="client_id" id="client_id">
+            <br>
+            <label for="client_secret">Client Secret</label>
+            <input type="text" name="client_secret" id="client_secret">
+        </div>
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+    <br>
+    <br>
+</div>
+{% endblock %}
