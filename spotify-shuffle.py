@@ -24,21 +24,11 @@ token_uri = "https://accounts.spotify.com/api/token"
 backup_path = "./backups/"
 access_token = None
 header = None
-# Load secrets
-secrets = {}
-try:
-    with open('secrets.json', 'r') as f:
-        secrets = json.loads(f.read())
-    if not os.path.exists(backup_path):
-        os.mkdir(backup_path)
-except Exception as e:
-    print(e)
-    print("You must create a secrets.json file. See https://github.com/ssebs/spotify-real-shuffle/")
-    exit(1)
 
 # Start processing
 app = Flask(__name__)
 app.secret_key = datetime.now().isoformat()
+app.config["SESSION_COOKIE_HTTPONLY"] = False
 # print("Spotify Shuffle")
 # print(f"cid: {secrets['client_id']}, cs: {secrets['client_secret']}")
 
@@ -46,9 +36,11 @@ if not os.environ.get("WERKZEUG_RUN_MAIN"):
     webbrowser.open("http://127.0.0.1:8080", new=0, autoraise=True)
 
 
-@app.route('/')
 @app.route('/home/')
 def home_rt():
+    # TODO: make this a wrapper func
+    if "secrets" not in session:
+        load_secrets()
     if "header" in session:
         header = session["header"]
 
@@ -65,13 +57,16 @@ def home_rt():
 
 @app.route('/login/')
 def login_rt():
+    if "secrets" not in session:
+        return redirect("/setup")
+
     # Handle login pt 1 (will move on to /callback/)
     print("Logging in...")
     r = requests.get(auth_uri, params={
         "response_type": "code",
-        "client_id": secrets['client_id'],
+        "client_id": session["secrets"]['client_id'],
         "scope": " ".join(scopes),
-        "redirect_uri": "http://localhost:8080/callback"
+        "redirect_uri": "http://127.0.0.1:8080/callback"
     })
     return redirect(r.url)
 
@@ -80,15 +75,15 @@ def login_rt():
 def callback_rt():
     # Handle login pt 2
     if "error" in request.args:
-        return request.args["error"]
+        return render_template('error.html', error=request.args["error"])
 
-    secret = secrets['client_id'] + ":" + secrets["client_secret"]
+    secret = session["secrets"]['client_id'] + ":" + session["secrets"]["client_secret"]
     auth_encoded = base64.b64encode(secret.encode(("ascii"))).decode("ascii")
     # Get access token
     r = requests.post(token_uri, data={
         "grant_type": "authorization_code",
         "code": request.args['code'],
-        "redirect_uri": "http://localhost:8080/callback"
+        "redirect_uri": "http://127.0.0.1:8080/callback"
     }, headers={
         "Authorization": f"Basic {str(auth_encoded)}",
         "Content-Type": "application/x-www-form-urlencoded"
@@ -197,10 +192,12 @@ def update_rt():
     return render_template('updated.html', updates=ui_obj)
 
 
+@app.route('/')
 @app.route("/setup/", methods=["GET", "POST"])
 def setup_rt():
     # Don't do setup if we already have the header configured
     if "header" in session:
+        load_secrets()
         return redirect("/home")
     
     # User fills out form for client id and secret, POST's it back here to save as a file
@@ -216,7 +213,9 @@ def setup_rt():
                         "client_id": _id,
                         "client_secret": _secret
                     }))
-
+                load_secrets()
+                print("secrets")
+                print(session["secrets"])
                 return redirect("/login")
             else:
                 msg = "The client_id or client_secret field is missing. If you submitted the form, report this bug. "
@@ -224,6 +223,7 @@ def setup_rt():
         except Exception as e:
             return render_template('error.html', error=json.dumps(e, indent=2))
     else:
+        # Will turn into the POST request expected above
         return render_template("setup.html")
         # Render site
 
@@ -333,6 +333,17 @@ def update_playlist_items(uris: list, uris_del: list, playlist_id: str, header: 
         print(e)
         return {"Error": e, "Request": r.text}
 
+
+def load_secrets():
+    try:
+        with open('secrets.json', 'r') as f:
+            session["secrets"] = json.loads(f.read())
+        if not os.path.exists(backup_path):
+            os.mkdir(backup_path)
+    except Exception as e:
+        print(e)
+        print("You must create a secrets.json file. See https://github.com/ssebs/spotify-real-shuffle/")
+        return render_template("setup.html")
 
 # Main func
 if __name__ == "__main__":

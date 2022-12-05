@@ -7,6 +7,21 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" href="https://unpkg.com/bamboo.css/dist/dark.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+    <script>
+        function deleteAllCookies() {
+            var cookies = document.cookie.split(";");
+
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                var eqPos = cookie.indexOf("=");
+                var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                const newVal = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                console.log(newVal)
+                document.cookie = newVal
+            }
+            window.location = "http://127.0.0.1:8080"
+        }
+    </script>
 </head>
 <body>
     <h1>Spotify Real Shuffle</h1>
@@ -14,6 +29,7 @@
         <li><a href="{{ url_for('home_rt') }}">Home</a></li>
         <li><a href="{{ url_for('setup_rt') }}">Setup</a></li>
         <li><a href="{{ url_for('login_rt') }}">Login</a></li>
+        <li><button onclick="deleteAllCookies()">Clear Cookies</button></li>
     </ul>
     <br>
     {% block body %}

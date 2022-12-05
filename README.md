@@ -26,7 +26,7 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
     - Click **SHOW CLIENT SECRET**
     - Copy the **Client Secret**, you'll need this
     - Click **Edit Settings** in green
-        - Under **Redirect URIs**, add: `http://localhost:8080/callback`
+        - Under **Redirect URIs**, add: `http://127.0.0.1:8080/callback`
         - Save
 - Clone this repo or download the zip
     - Clone:
