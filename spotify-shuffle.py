@@ -61,7 +61,7 @@ def login_rt():
         return redirect("/setup")
 
     # Handle login pt 1 (will move on to /callback/)
-    print("Logging in...")
+    # print("Logging in...")
     r = requests.get(auth_uri, params={
         "response_type": "code",
         "client_id": session["secrets"]['client_id'],

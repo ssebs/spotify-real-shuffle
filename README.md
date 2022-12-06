@@ -11,7 +11,9 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 - [ ] User can easily run this
 - [x] Support playlists over 100 items (update func)
 - [ ] Cleanup
-- [ ] Generate secrets.json on `/setup`
+- [x] Generate secrets.json on `/setup`
+- [ ] Add error handling for incorrect secrets
+    - Not possible
 - [ ] Good error handling
 - [ ] GUI?
 
