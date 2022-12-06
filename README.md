@@ -51,6 +51,7 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
         - They should look like a bunch of numbers and letters (e.g. `29658b9474ac93114a41b84640307830403dasd`)
     - Click Submit
         > If you get a white page that says `INVALID_CLIENT: Invalid client`, then the `client_id` or `cliend_secret` you entered was wrong.
+        
         ![invalid-client.png](./img/invalid-client.png)
     - Login to Spotify
     - Allow the app
@@ -67,6 +68,7 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
         - They should look like a bunch of numbers and letters (e.g. `29658b9474ac93114a41b84640307830403dasd`)
     - Click Submit
         > If you get a white page that says `INVALID_CLIENT: Invalid client`, then the `client_id` or `cliend_secret` you entered was wrong.
+        
         ![invalid-client.png](./img/invalid-client.png)
     - Login to Spotify
     - Allow the app
