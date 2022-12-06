@@ -9,9 +9,9 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
     - Click **CREATE AN APP**
         - Enter something for the name and description, it can be whatever you want
         - Click **Create**
-    - Copy the **Client ID**, you'll need this
+    - Copy the **Client ID**, you'll need this later
     - Click **SHOW CLIENT SECRET**
-    - Copy the **Client Secret**, you'll need this
+    - Copy the **Client Secret**, you'll need this later
     - Click **Edit Settings** in green
         - Under **Redirect URIs**, paste: `http://127.0.0.1:8080/callback`
         - Save
