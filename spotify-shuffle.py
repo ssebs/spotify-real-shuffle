@@ -224,6 +224,9 @@ def setup_rt():
             return render_template('error.html', error=json.dumps(e, indent=2))
     else:
         # Will turn into the POST request expected above
+        if os.path.exists("secrets.json"):
+            # TODO: Add something here that will check if a successful login has occurred, then don't delete this
+            os.remove("secrets.json")
         return render_template("setup.html")
         # Render site
 
