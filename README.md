@@ -15,12 +15,11 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 - [ ] Add error handling for incorrect secrets
     - Not possible, find a good way to present this to users
 - [ ] Good error handling
-- [ ] GUI?
 
 ## Prereqs
 - Setup your Spotify Developer account (you'll need a regular Spotify account)
-    - https://developer.spotify.com/dashboard/
-    - Click **Log in** and log in with your regular Spotify account
+    - Go to https://developer.spotify.com/dashboard/
+    - Click **Log in**, and log in with your regular Spotify account
     - Click **CREATE AN APP**
         - Enter something for the name and description, it can be whatever you want
         - Click **Create**
@@ -28,53 +27,72 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
     - Click **SHOW CLIENT SECRET**
     - Copy the **Client Secret**, you'll need this
     - Click **Edit Settings** in green
-        - Under **Redirect URIs**, add: `http://127.0.0.1:8080/callback`
+        - Under **Redirect URIs**, paste: `http://127.0.0.1:8080/callback`
         - Save
+### Prereqs - running from source
 - Clone this repo or download the zip
     - Clone:
         - `$ git clone https://github.com/ssebs/spotify-real-shuffle`
     - Zip:
         - Go to https://github.com/ssebs/spotify-real-shuffle
         - Click the green Code button > Download ZIP
-- Create a `secrets.json` file
-- Within the `spotify-real-shuffle/` directory, create a new text file called `secrets.json` with the contents below. (Replace id and secret with the ones you copied earlier)
-```json
-{
-    "client_id": "<somehashvalue>",
-    "client_secret": "<somehashvalue>"
-}
-```
 
 
 ## Installation
-- Install python if not already installed (or, run the [binary release](https://github.com/ssebs/spotify-real-shuffle/releases/))
-- Linux/Mac
-    - `$ python -m venv venv`
-    - `$ source ./venv/bin/activate` 
-    - `(venv) $ pip install -r requirements.txt`
-- Windows
-    - `PS> python.exe -m venv venv`
-    - `PS> .\venv\Scripts\Activate.ps1`
-        > If you get an execution policy warning, open PowerShell as an administrator and run `Set-ExecutionPolicy RemoteSigned`
-    - `(venv) PS> pip install -r requirements.txt`
+- Binary download (EZ install):
+    - Download the latest `spotify-shuffle.exe` from [binary release](https://github.com/ssebs/spotify-real-shuffle/releases/)
+    - Allow your browser to download the file, then run `spotify-shuffle.exe`
+    - Follow the instructions on the web page
+    - Once done, close the terminal that popped up
+- Install from source:
+    - Install python if not already installed 
+    - Linux/Mac
+        - `$ python -m venv venv`
+        - `$ source ./venv/bin/activate` 
+        - `(venv) $ pip install -r requirements.txt`
+    - Windows
+        - `PS> python.exe -m venv venv`
+        - `PS> .\venv\Scripts\Activate.ps1`
+            > If you get an execution policy warning, open PowerShell as an administrator and run `Set-ExecutionPolicy RemoteSigned`
+        - `(venv) PS> pip install -r requirements.txt`
 
 ## Usage
 - Binary:
-    - Download the spotify-shuffle.exe from the [binary release's page](https://github.com/ssebs/spotify-real-shuffle/releases/))
-    - Create the `secrets.json` file as noted in the prereqs
-    - Double click the exe and open a web browser to http://127.0.0.1:8080 
+    - Double click the exe 
+    - A web browser should open up to http://127.0.0.1:8080
+    - Enter the `client_id` and `cliend_secret` that you copied earlier into the text fields
+        - They should look like a bunch of numbers and letters (e.g. `29658b9474ac93114a41b84640307830403dasd`)
+    - Click Submit
+        > If you get a white page that says `INVALID_CLIENT: Invalid client`, then the `client_id` or `cliend_secret` you entered was wrong.
+        ![invalid-client.png](./img/invalid-client.png)
+    - Login to Spotify
+    - Allow the app
+    - Your playlists should be listed below
+        - Check the playlist that you'd like to shuffle
+        - Click Submit
+        - Wait
+        > If you get an error message, it may be that you've selected a playlist that you don't own. Uncheck that playlist.
 - From Source:
-    - After setting up the venv above
-    - `$ python spotify-shuffle.py`
-    - Open a web browser to http://127.0.0.1:8080 
-        - Login
-        - Select playlists to update
-            > Note: You must be the playlist owner
+    - After setting up the environment as detailed above
+    - `(venv) $ python spotify-shuffle.py`
+    - A web browser should open up to http://127.0.0.1:8080
+    - Enter the `client_id` and `cliend_secret` that you copied earlier into the text fields
+        - They should look like a bunch of numbers and letters (e.g. `29658b9474ac93114a41b84640307830403dasd`)
+    - Click Submit
+        > If you get a white page that says `INVALID_CLIENT: Invalid client`, then the `client_id` or `cliend_secret` you entered was wrong.
+        ![invalid-client.png](./img/invalid-client.png)
+    - Login to Spotify
+    - Allow the app
+    - Your playlists should be listed below
+        - Check the playlist that you'd like to shuffle
+        - Click Submit
+        - Wait
+        > If you get an error message, it may be that you've selected a playlist that you don't own. Uncheck that playlist.
 
-## Build
+## Distributing
+To build the .exe:
 - `pyinstaller -c -F --add-data "templates;templates" --add-data "static;static" spotify-shuffle.py`
     - Built file is under `./dist/`
-    - `secrets.json` file needs to be next to the binary
 
 ## LICENSE
 [GPL V3](./LICENSE)
