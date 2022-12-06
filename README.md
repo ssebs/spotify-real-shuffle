@@ -27,6 +27,7 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 ## Installation
 - Binary download (EZ install):
     - Download the latest `spotify-shuffle.exe` from [binary release](https://github.com/ssebs/spotify-real-shuffle/releases/)
+        - ![binary-release.png](./img/binary-release.png)
     - Allow your browser to download the file, then run `spotify-shuffle.exe`
     - Follow the instructions on the web page
     - Once done, close the terminal that popped up
