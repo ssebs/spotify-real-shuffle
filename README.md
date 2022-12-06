@@ -2,20 +2,6 @@
 
 We all know how bad Spotify's shuffle is, so this tool will shuffle up your custom order for your playlists.
 
-## Goals
-- [x] Connect to API and read playlist info
-- [X] Re-arrange some songs
-- [X] Shuffle a playlist and save it
-- [x] Support Pagination (max 100 by default)
-- [x] User can select which playlists to shuffle
-- [ ] User can easily run this
-- [x] Support playlists over 100 items (update func)
-- [ ] Cleanup
-- [x] Generate secrets.json on `/setup`
-- [ ] Add error handling for incorrect secrets
-    - Not possible, find a good way to present this to users
-- [ ] Good error handling
-
 ## Prereqs
 - Setup your Spotify Developer account (you'll need a regular Spotify account)
     - Go to https://developer.spotify.com/dashboard/
@@ -93,6 +79,20 @@ We all know how bad Spotify's shuffle is, so this tool will shuffle up your cust
 To build the .exe:
 - `pyinstaller -c -F --add-data "templates;templates" --add-data "static;static" spotify-shuffle.py`
     - Built file is under `./dist/`
+
+## Goals
+- [x] Connect to API and read playlist info
+- [X] Re-arrange some songs
+- [X] Shuffle a playlist and save it
+- [x] Support Pagination (max 100 by default)
+- [x] User can select which playlists to shuffle
+- [ ] User can easily run this
+- [x] Support playlists over 100 items (update func)
+- [ ] Cleanup
+- [x] Generate secrets.json on `/setup`
+- [ ] Add error handling for incorrect secrets
+    - Not possible, find a good way to present this to users
+- [ ] Good error handling
 
 ## LICENSE
 [GPL V3](./LICENSE)
